@@ -72,11 +72,9 @@ Once setup is complete:
 
     You can update keywords and folders anytime.
 
-    Works best with clean scans (300 DPI recommended).
-
     Tesseract can read text in any orientation—no need to rotate files.
 
-    Ensure Tesseract is accessible in your system PATH or manually enter its path.
+    SortMate can read most image files and pdf scans.
 
     Keywords are not case-sensitive.
 
