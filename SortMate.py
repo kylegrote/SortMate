@@ -776,7 +776,7 @@ tk.Label(
 
 
 images["home_button_1"] = PhotoImage(
-    file="assets/frame0/button_1.png")
+    file="assets/button_1.png")
 buttons["runButton"] = Button(homeFrame,
     image=images["home_button_1"],
     borderwidth=0,
@@ -951,7 +951,7 @@ tk.Label(
 
 
 images["start_tesserectButton_1"] = PhotoImage(
-    file="assets/frame1/button_2.png")
+    file="assets/button_2.png")
 button_2 = Button(startFrame,
                   image=images["start_tesserectButton_1"],
                   borderwidth=0,
@@ -1023,7 +1023,7 @@ buttons["start_entry_2"].place(
 buttons["start_entry_2"].insert(0, sourceFolder)
 
 
-images["start_sourceButton_8"] = PhotoImage(file="assets/frame1/button_3.png")
+images["start_sourceButton_8"] = PhotoImage(file="assets/button_3.png")
 button_3 = Button(startFrame,
                   image=images["start_sourceButton_8"],
                   borderwidth=0,
@@ -1365,7 +1365,7 @@ class deleteButton(Button):
 
 
 images["settings_DeleteButton_1"] = PhotoImage(file="assets/deleteIcon.png")
-images["settings_button_2"] = PhotoImage(file="assets/frame2/button_2.png")
+images["settings_button_2"] = PhotoImage(file="assets/frame2button_2.png")
 settingsInputLines = 0
 settingsInputLinesItems = 0
 categoryEntriesAndButtons = {"index":[],"deleteButtons":[],"categoryEntries":[],"categoryKeywordEntries":[],"categoryBrowseButtons":[],"categoryDirectoryEntries":[]}
@@ -1561,7 +1561,7 @@ for index in range(0, len(dfCategories["Category Name"])):
 
 
 images["settings_button_1"] = PhotoImage(
-    file="assets/frame2/button_1.png")
+    file="assets/frame2button_1.png")
 button_1 = Button(settingsFrame,
     image=images["settings_button_1"],
     borderwidth=0,
