@@ -107,7 +107,7 @@ def updatefileCountLabel():
         runDescriptionLabel.config(text=f"Please set up source folder in \nGetting Started page")
     except TypeError:
         runDescriptionLabel.config(text=f"Please set up source folder in \nGetting Started page")
-
+    root.after(5000, updatefileCountLabel)
 
 
 def selectSourceFolder():
@@ -379,6 +379,33 @@ def bind_mousewheel_scrolling(canvas_widget, scroll_func):
     canvas_widget.bind("<Leave>", _on_leave)
 
 
+def checkIfStringIsValid(string):
+    if any(c.isalpha() for c in string):
+        return True
+
+    if any(c.isdigit() for c in string):
+        return True
+    return False
+
+def checkForValidInputs(listOfEntries, errorLocation):
+    xLine = 1
+    errorsOnxLines = []
+    saveError = False
+    for entryInput in listOfEntries:
+        entryInput = entryInput.get()
+        errorMessage = "Expected Input to contain at least 1 number or letter"
+        if checkIfStringIsValid(entryInput) == False:
+            saveError = True
+            errorsOnxLines.append(xLine)
+        xLine += 1
+    if saveError == True:
+        if len(errorsOnxLines) > 3:
+            errorInvalidDirSettingsLabel.config(
+                text=f"Save Error: Failed to Save: \n{errorMessage} \n{errorLocation} line(s) \n{errorsOnxLines}")
+        else:
+            errorInvalidDirSettingsLabel.config(
+                text=f"Save Error: Failed to Save: \n{errorMessage} \n{errorLocation} line(s) {errorsOnxLines}")
+    return saveError
 
 
 def saveChangesSettings():
@@ -389,15 +416,70 @@ def saveChangesSettings():
     global errorInvalidDirSettingsLabel
     for dir in categoryEntriesAndButtons["categoryDirectoryEntries"]:
         dir = dir.get()
+        if checkIfStringIsValid(dir) == False:
+            saveError = True
+            errorsOnxLines.append(xLine)
         if os.path.isdir(dir) == False:
             saveError=True
             errorsOnxLines.append(xLine)
+        if saveError == True:
             if len(errorsOnxLines) >3:
                 errorInvalidDirSettingsLabel.config(text=f"Save Error: Failed to Save: \nDirectory Path Invalid on line(s) \n{errorsOnxLines}")
             else:
                 errorInvalidDirSettingsLabel.config(
                     text=f"Save Error: Failed to Save: \nDirectory Path Invalid on line(s) {errorsOnxLines}")
         xLine += 1
+
+
+
+
+    checkSaveError = checkForValidInputs(categoryEntriesAndButtons["categoryEntries"], "Directory")
+    if checkSaveError == True:
+        saveError = True
+
+    checkSaveError = checkForValidInputs(categoryEntriesAndButtons["categoryKeywordEntries"], "Directory")
+    if checkSaveError == True:
+        saveError = True
+
+    checkSaveError = checkForValidInputs(itemEntriesAndButtons["itemNames"], "Item")
+    if checkSaveError == True:
+        saveError = True
+
+    checkSaveError = checkForValidInputs(itemEntriesAndButtons["itemKeywords"], "Item")
+    if checkSaveError == True:
+        saveError = True
+
+
+    if saveError == False:
+        catDict = {"Category Name":[],"Category Filter Search Criteria":[], "Destination Path":[]}
+        for input in categoryEntriesAndButtons["categoryEntries"]:
+            catDict["Category Name"].append(input.get())
+        for input in categoryEntriesAndButtons["categoryKeywordEntries"]:
+            catDict["Category Filter Search Criteria"].append(input.get())
+        for input in categoryEntriesAndButtons["categoryDirectoryEntries"]:
+            catDict["Destination Path"].append(input.get())
+
+        df = pd.DataFrame(catDict)
+        df.to_csv("PDF Mail Sorter Category Filters.csv", index=False)
+
+        itemDict = {"Item Name":[],"Item Filter Search Criteria":[]}
+        for input in itemEntriesAndButtons["itemNames"]:
+            itemNameInput = input.get().replace("/", "_").replace('\\', '_').replace(":", "_").replace("*", "_")
+            itemNameInput.replace("?", "_").replace("'", "_").replace('"', "_").replace("<", "_").replace(">", "_")
+            itemNameInput.replace("|", "_").replace(".", "_").replace('"', "_").replace(',', "_")
+            itemDict["Item Name"].append(itemNameInput)
+        for input in itemEntriesAndButtons["itemKeywords"]:
+            itemDict["Item Filter Search Criteria"].append(input.get())
+
+
+        df = pd.DataFrame(itemDict)
+        df.to_csv("PDF Mailer Sorter Item Filters.csv", index=False)
+
+        global dfCategories
+        global dfItems
+        dfCategories = pd.read_csv("PDF Mail Sorter Category Filters.csv")
+        dfItems = pd.read_csv("PDF Mailer Sorter Item Filters.csv")
+
     if saveError == False:
         errorInvalidDirSettingsLabel.config(text=f"Save Successful", fg="#000000")
         time.sleep(.1)
@@ -435,27 +517,8 @@ def saveChangesSettings():
         errorInvalidDirSettingsLabel.config(fg="#000000", text="")
         root.update()
 
-    if saveError == False:
-        catDict = {"Category Name":[],"Category Filter Search Criteria":[], "Destination Path":[]}
-        for input in categoryEntriesAndButtons["categoryEntries"]:
-            catDict["Category Name"].append(input.get())
-        for input in categoryEntriesAndButtons["categoryKeywordEntries"]:
-            catDict["Category Filter Search Criteria"].append(input.get())
-        for input in categoryEntriesAndButtons["categoryDirectoryEntries"]:
-            catDict["Destination Path"].append(input.get())
-
-        df = pd.DataFrame(catDict)
-        df.to_csv("PDF Mail Sorter Category Filters.csv", index=False)
-
-        itemDict = {"Item Name":[],"Item Filter Search Criteria":[]}
-        for input in itemEntriesAndButtons["itemNames"]:
-            itemDict["Item Name"].append(input.get())
-        for input in itemEntriesAndButtons["itemKeywords"]:
-            itemDict["Item Filter Search Criteria"].append(input.get())
 
 
-        df = pd.DataFrame(itemDict)
-        df.to_csv("PDF Mailer Sorter Item Filters.csv", index=False)
 
 
 def start_run_thread():
@@ -479,6 +542,10 @@ def run():
             isImageFile = False
         if ".pdf" in pdf or isImageFile == True:
             writeWithIcon(f"processing file: {pdf}", "img/document.png", 0)
+            fileSize = os.path.getsize(f"{mySourcePath}/{pdf}")
+            fileSize = fileSize/1000000
+            if fileSize > 5: # if file bigger than 5mb give file size warning
+                writeWithIcon(f"Large File: {round(fileSize, 1)}mb: File may take longer to process", "img/warning.png", 4)
             writeWithIcon(f"converting to image...", "img/picture.png", 4)
             try:
                 imagespdf = pdf2image.convert_from_path(f"{mySourcePath}/{pdf}")
@@ -517,6 +584,10 @@ def run():
                     # search for an item term
                     itemIndex = 0
                     for item in dfItems["Item Filter Search Criteria"]:
+                        try:
+                            item.lower()
+                        except:
+                            continue
                         if item.lower() in text.lower() or item.lower() in fulltext.lower():
                             writeWithIcon(f"{dfItems["Item Name"][itemIndex]} file...", "img/folder.png", 20)
                             TEMPdestinationFolder = dfCategories["Destination Path"][catIndex] + "/" + \
@@ -1304,6 +1375,28 @@ addNewButton = Button(settingsFrame,
     relief="flat"
 )
 
+class selectDirectoryButton(Button):
+    def __init__(self):
+        super().__init__(settingsFrame,
+            image=images["settings_button_2"],
+            borderwidth=0,
+            highlightthickness=0,
+            command=lambda: self.selectDirectory(),
+            relief="flat"
+        )
+
+    def selectDirectory(self):
+        folder_selected = filedialog.askdirectory(title="Select a Folder")
+        if folder_selected:
+            for x in categoryEntriesAndButtons["categoryBrowseButtons"]:
+                if x == self:
+                    indx = categoryEntriesAndButtons["categoryBrowseButtons"].index(self)
+                    categoryEntriesAndButtons["categoryDirectoryEntries"][indx].delete(0, 'end')
+                    categoryEntriesAndButtons["categoryDirectoryEntries"][indx].insert(0, folder_selected)
+
+                    root.update()
+
+
 class deleteButton(Button):
     def __init__(self, categoryOrItem):
         super().__init__(settingsFrame,
@@ -1521,13 +1614,7 @@ def createNewCategoryInputLine(textFill1="",textFill2="",textFill3="" ):
     categoryEntriesAndButtons["categoryDirectoryEntries"].append(entry_3)
 
 
-    browseButton = Button(settingsFrame,
-        image=images["settings_button_2"],
-        borderwidth=0,
-        highlightthickness=0,
-        command=lambda: print(f"browse button for line {categoryIndex} clicked"),
-        relief="flat"
-    )
+    browseButton = selectDirectoryButton()
     browseButton.place(
         x=486.0,
         y=166.0+(settingsInputLines*30),
